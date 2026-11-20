@@ -88,10 +88,24 @@ dsh plugin --profile <profile> add dsh-screenshot-region
 
 ## 三、提交到插件市场（可选）
 
-- [dshhub.org](https://dshhub.org) — 提交 GitHub 仓库链接
-- [dshplugin.online](https://dshplugin.online) — 同上
+两个目录的收录方式不同，都已完成：
 
-市场页会读取仓库的 `README.md`、`docs/DETAIL.md`、`package.json` 的 `dsh` 段与 `description`。
+| 目录 | 收录方式 | 状态（2026-11-20） |
+|---|---|---|
+| [dshplugin.online](https://dshplugin.online) | 给仓库加 GitHub topic **`dsh-plugin`**，目录按 topic 自动索引 | 已加 topic（`dsh-plugin` / `deepseek-harness` / `screenshot` / `windows`），已在 `topic:dsh-plugin` 搜索可见；等待其下次抓取 |
+| [dshhub.org](https://dshhub.org) | 提交 GitHub issue（Submit plugin 模板） | 已提交 [coderPerseus/dsh-hub#97](https://github.com/coderPerseus/dsh-hub/issues/97)，等待维护者处理 |
+
+自查是否已被 dshplugin.online 收录：
+
+```powershell
+# GitHub 侧（收录依据）
+# 打开 https://github.com/topics/dsh-plugin 搜索仓库名，或：
+gh search repos --topic=dsh-plugin --owner=yxyouyi     # 需要 gh CLI
+# 目录页
+# https://dshplugin.online/plugins/yxyouyi--dsh-screenshot-region
+```
+
+市场页会读取仓库的 `README.md`、`docs/DETAIL.md`、`package.json` 的 `dsh` 段与 `description`；示例插件页参考 <https://dshhub.org/en/plugins/KevinMKRL/dsh-windows-screenshot/>。
 
 ## 四、发布前检查清单
 
