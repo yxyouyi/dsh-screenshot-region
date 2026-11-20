@@ -64,5 +64,12 @@
       "dsh": ">=0.2.0-rc.1"
     }
   },
-  "dependencies": {}
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yxyouyi/dsh-screenshot-region.git"
+  },
+  "homepage": "https://github.com/yxyouyi/dsh-screenshot-region",
+  "bugs": {
+    "url": "https://github.com/yxyouyi/dsh-screenshot-region/issues"
+  }
 }
