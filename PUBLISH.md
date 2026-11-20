@@ -43,7 +43,7 @@ cd D:\Documents\deepseek-harness\default-workspace\dsh-screenshot-region
 npm publish                                 # publishConfig 已设 access=public
 ```
 
-`dsh-screenshot-region` 这个名字在 npmjs 上目前**未被占用**（2026-11-20 核对）。若被别人抢注，改成带 scope 的名字：
+`dsh-screenshot-region` 这个名字在 npmjs 上目前**已被本包占用**（维护者 `yxyouyi`，2026-11-20 首次发布）。若将来要换名或加 scope：
 
 ```powershell
 # 包名与 cordis.patch.yml 的 name 必须一致，两处一起改
@@ -51,6 +51,32 @@ npm pkg set name=@你的用户名/dsh-screenshot-region
 # 同时修改 cordis.patch.yml 里的 id / name
 npm publish --access public
 ```
+
+### 首次发布会先出现占位版本（2026-11 实测）
+
+新包第一次 `npm publish` 后，注册表会先出现一个公开占位版本 `0.0.0-stage`，包页面显示 "Temporary Holding Version / awaiting a staged release"：
+
+- 这是 npm 首次发布审核流程，**不需要你在网页上点什么**（`Staged Packages` 页面会是空的，`npm stage list` 也查不到）
+- 实测 3–4 分钟后真实版本自动放行，`dist-tags.latest` 指向真实版本
+- 判断是否已上线只看注册表，不看网页：`npm view <pkg> version` 能返回真实版本号即为成功
+- npmjs 的**网页**页面缓存更久（可能仍显示 0.0.0-stage），强制刷新或等几分钟即可
+- 审核期间 `npm i` 会拿到 404 或占位版本，属正常现象
+
+### 2FA 与发布凭据
+
+开启 2FA 的账号，`npm publish` 需要 `--otp=<6位码>`，或使用勾选了 **Bypass 2FA** 的 granular access token：
+
+```powershell
+# 用临时 npmrc 传 token，避免写进全局配置；发布后删除临时文件
+@"
+registry=https://registry.npmjs.org/
+//registry.npmjs.org/:_authToken=<token>
+"@ | Set-Content $env:TEMP\.npmrc-publish -Encoding ascii -NoNewline
+npm publish --userconfig=$env:TEMP\.npmrc-publish
+Remove-Item $env:TEMP\.npmrc-publish -Force
+```
+
+token 用后请在 https://www.npmjs.com/settings/~/tokens 删除。
 
 发布后自检：
 
