@@ -5,6 +5,7 @@
   "type": "module",
   "main": "lib/index.js",
   "license": "MIT",
+  "author": "youyi <yxyouyi@163.com>",
   "os": [
     "win32"
   ],

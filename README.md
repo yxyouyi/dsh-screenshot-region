@@ -3,6 +3,8 @@
 DeepSeek Harness 输入框旁的**一键原生框选截图**：点一下按钮 → 屏幕定格 → 拖一个框 → 松手，**只有框内那块图**进入对话框草稿，可以继续打字再发送。
 
 > 这是 [dsh-plugin-screenshot](https://github.com/Durandalw/dsh-plugin-screenshot)（MIT）的整理版：把「先截整屏、再在页面里二次框选」改成 Windows 原生覆盖层的一次性框选，并修掉了几个会让流程卡死的缺陷。差异见下文「相对上游的改动」。
+>
+> 维护者：`youyi <yxyouyi@163.com>` · 发布流程见 [PUBLISH.md](./PUBLISH.md)
 
 ## 为什么需要它
 
