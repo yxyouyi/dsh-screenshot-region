@@ -1,0 +1,67 @@
+{
+  "name": "dsh-screenshot-region",
+  "version": "0.4.0",
+  "description": "DeepSeek Harness 截图插件：输入框旁一键原生框选，只有框内图片进入对话框草稿。One-step Windows region screenshot for the DSH composer: press, drag, done.",
+  "type": "module",
+  "main": "lib/index.js",
+  "license": "MIT",
+  "os": [
+    "win32"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "screenshot",
+    "snipping",
+    "region",
+    "cordis",
+    "windows"
+  ],
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "scripts/region.ps1",
+    "scripts/snip.ps1",
+    "scripts/shot.ps1",
+    "scripts/win.ps1",
+    "scripts/crop.ps1",
+    "scripts/clip.ps1",
+    "cordis.patch.yml",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "docs"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    },
+    "compatibility": {
+      "node": ">=20",
+      "dsh": ">=0.2.0-rc.1"
+    }
+  },
+  "dependencies": {}
+}
