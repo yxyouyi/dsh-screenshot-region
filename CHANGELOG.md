@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.1 — 2026-11-20
+
+### 修复
+
+- **隐藏本窗口截图后，Harness 窗口的窗口状态被改变**：还原时用的是 `ShowWindow(SW_RESTORE)`，它对最大化窗口会还原成普通大小、对最小化窗口会拉起来。现在隐藏前先用 `GetWindowPlacement` 记下 `showCmd`，还原时按原状态显示（`SW_SHOWMAXIMIZED` / `SW_MINIMIZE` / `SW_SHOWNORMAL`），最大化仍是最大化、最小化仍是最小化。`region.ps1` 与 `snip.ps1`（模型工具路径）同步修复。
+
+### 验证
+
+- 用受控探测窗口覆盖三种状态：`showCmd 3→3`、`1→1`、`2→2`，并让窗口自报 `WindowState=Maximized`。
+- `region.ps1 -SelfTest` 与 `-Rect` 自检仍通过。
+
 ## 0.4.0 — 2026-11-20
 
 首个整理发布版，基于上游 `dsh-plugin-screenshot@0.3.5`（MIT）。

@@ -46,8 +46,14 @@ Add-Type -Namespace SN -Name Native -MemberDefinition @'
 [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
 [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
 [DllImport("user32.dll")] public static extern int GetSystemMetrics(int index);
+[DllImport("user32.dll")] public static extern bool GetWindowPlacement(IntPtr h, ref WINDOWPLACEMENT p);
 [DllImport("dwmapi.dll")] public static extern int DwmFlush();
+[StructLayout(LayoutKind.Sequential)] public struct POINT { public int X; public int Y; }
 [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
+[StructLayout(LayoutKind.Sequential)] public struct WINDOWPLACEMENT {
+  public int length; public int flags; public int showCmd;
+  public POINT ptMinPosition; public POINT ptMaxPosition; public RECT rcNormalPosition;
+}
 '@
 
 function Get-ScreenSize {
@@ -77,8 +83,14 @@ try {
 
   $orig = $null
   $hidden = $false
+  $showCmd = 1
   if ($HideOwn -and $Hwnd -ne 0) {
     $orig = Get-Rect $h
+    # Remember maximized/normal/minimized before hiding: SW_RESTORE would return a
+    # maximized window at normal size, which looks like the window shrinking itself.
+    $wp = New-Object SN.Native+WINDOWPLACEMENT
+    $wp.length = [System.Runtime.InteropServices.Marshal]::SizeOf($wp)
+    if ([SN.Native]::GetWindowPlacement($h, [ref]$wp)) { $showCmd = $wp.showCmd }
     [void][SN.Native]::ShowWindow($h, 0)   # SW_HIDE
     $hidden = $true
     # Block until DWM has completed a composition pass, so the removal of the window
@@ -101,16 +113,19 @@ try {
     $bmp.Dispose()
   } finally {
     if ($hidden) {
-      # A window hidden with SW_HIDE loses its activation, so SW_SHOW alone can leave
-      # it visible-but-buried. Restore the frame, re-assert visibility, then take the
-      # foreground back — the same sequence win.ps1 -Action show uses. This lives in
-      # `finally` so an exception during capture can never leave the window hidden.
-      [void][SN.Native]::ShowWindow($h, 9)   # SW_RESTORE
-      [void][SN.Native]::ShowWindow($h, 5)   # SW_SHOW
-      [void][SN.Native]::SetWindowPos($h, [IntPtr](-1), 0, 0, 0, 0, 0x0003)  # TOPMOST | NOSIZE | NOMOVE
-      [void][SN.Native]::SetWindowPos($h, [IntPtr](-2), 0, 0, 0, 0, 0x0003)  # NOTOPMOST
-      [void][SN.Native]::SetForegroundWindow($h)
-      [void][SN.Native]::ShowWindow($h, 5)
+      # Show it again in the state it was in before the capture, not via SW_RESTORE
+      # (which un-maximizes a maximized window and un-minimizes a minimized one).
+      switch ($showCmd) {
+        3 { [void][SN.Native]::ShowWindow($h, 3) }        # SW_SHOWMAXIMIZED
+        2 { [void][SN.Native]::ShowWindow($h, 6) }        # SW_MINIMIZE
+        default { [void][SN.Native]::ShowWindow($h, 1) }  # SW_SHOWNORMAL
+      }
+      if ($showCmd -ne 2) {
+        # SW_HIDE drops activation, so re-assert the frame and take focus back.
+        [void][SN.Native]::SetWindowPos($h, [IntPtr](-1), 0, 0, 0, 0, 0x0003)  # TOPMOST | NOSIZE | NOMOVE
+        [void][SN.Native]::SetWindowPos($h, [IntPtr](-2), 0, 0, 0, 0, 0x0003)  # NOTOPMOST
+        [void][SN.Native]::SetForegroundWindow($h)
+      }
     }
   }
 

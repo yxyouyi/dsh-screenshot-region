@@ -46,8 +46,14 @@ Add-Type -Namespace RGN -Name Native -MemberDefinition @'
 [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
 [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
 [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
+[DllImport("user32.dll")] public static extern bool GetWindowPlacement(IntPtr h, ref WINDOWPLACEMENT p);
 [DllImport("dwmapi.dll")] public static extern int DwmFlush();
+[StructLayout(LayoutKind.Sequential)] public struct POINT { public int X; public int Y; }
 [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
+[StructLayout(LayoutKind.Sequential)] public struct WINDOWPLACEMENT {
+  public int length; public int flags; public int showCmd;
+  public POINT ptMinPosition; public POINT ptMaxPosition; public RECT rcNormalPosition;
+}
 '@
 
 function Write-JsonLine([string]$json) { Write-Output $json }
@@ -84,18 +90,27 @@ function Save-Crop($bmp, [int]$x, [int]$y, [int]$w, [int]$h) {
 # Event handlers run in their own scope, so every value they touch is kept in a
 # script-scoped bag rather than a local variable of the enclosing block.
 $script:rgnHidden = $false
+# State the owning window had before it was hidden (GetWindowPlacement showCmd).
+$script:rgnShowCmd = 1
 
 function Restore-OwnWindow {
   if (-not $script:rgnHidden -or $Hwnd -eq 0) { return }
   $h = [IntPtr]$Hwnd
-  # SW_HIDE drops activation, so SW_SHOW alone can leave the window visible but
-  # buried; restore the frame, re-assert visibility, then take the foreground back.
-  [void][RGN.Native]::ShowWindow($h, 9)   # SW_RESTORE
-  [void][RGN.Native]::ShowWindow($h, 5)   # SW_SHOW
-  [void][RGN.Native]::SetWindowPos($h, [IntPtr](-1), 0, 0, 0, 0, 0x0003)
-  [void][RGN.Native]::SetWindowPos($h, [IntPtr](-2), 0, 0, 0, 0, 0x0003)
-  [void][RGN.Native]::SetForegroundWindow($h)
-  [void][RGN.Native]::ShowWindow($h, 5)
+  # Restore the state the window had BEFORE it was hidden. SW_RESTORE returns a
+  # maximized window at normal size and un-minimizes a minimized one, which is the
+  # jump the user saw; showing by the recorded showCmd keeps the original state.
+  switch ($script:rgnShowCmd) {
+    3 { [void][RGN.Native]::ShowWindow($h, 3) }        # SW_SHOWMAXIMIZED
+    2 { [void][RGN.Native]::ShowWindow($h, 6) }        # SW_MINIMIZE
+    default { [void][RGN.Native]::ShowWindow($h, 1) }  # SW_SHOWNORMAL
+  }
+  if ($script:rgnShowCmd -ne 2) {
+    # Bring it back above the other windows and give focus back; a minimized window
+    # has no frame to raise, so this is skipped for that case.
+    [void][RGN.Native]::SetWindowPos($h, [IntPtr](-1), 0, 0, 0, 0, 0x0003)  # TOPMOST | NOSIZE | NOMOVE
+    [void][RGN.Native]::SetWindowPos($h, [IntPtr](-2), 0, 0, 0, 0, 0x0003)  # NOTOPMOST
+    [void][RGN.Native]::SetForegroundWindow($h)
+  }
   $script:rgnHidden = $false
 }
 
@@ -104,6 +119,11 @@ try {
   $vs = [System.Windows.Forms.SystemInformation]::VirtualScreen
 
   if ($HideOwn -and $Hwnd -ne 0) {
+    # Record the exact state first. SW_RESTORE on a maximized window returns it at
+    # normal size, which reads as "the window shrank by itself".
+    $wp = New-Object RGN.Native+WINDOWPLACEMENT
+    $wp.length = [System.Runtime.InteropServices.Marshal]::SizeOf($wp)
+    if ([RGN.Native]::GetWindowPlacement([IntPtr]$Hwnd, [ref]$wp)) { $script:rgnShowCmd = $wp.showCmd }
     [void][RGN.Native]::ShowWindow([IntPtr]$Hwnd, 0)   # SW_HIDE
     $script:rgnHidden = $true
     # SW_HIDE only clears WS_VISIBLE; DWM removes the pixels asynchronously. Without

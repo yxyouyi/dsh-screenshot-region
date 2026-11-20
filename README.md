@@ -105,6 +105,7 @@ npm pack --pack-destination build
 6. **修复** `Form.DoubleBuffered` 属受保护属性、PowerShell 直接赋值抛错（报错文本只有 `DoubleBuffered`）。
 7. **修复** `region.ps1` 缺少 UTF-8 BOM，Windows PowerShell 5.1 按 GBK 读取导致脚本解析失败。
 8. **修复** 宿主包解析不到 `@deepseek-ai/dsh-tools` 时整条 entry 加载失败 → 改为可选依赖并降级。
+9. **修复** 「隐藏本窗口」截完返回时会把窗口状态改掉（最大化被还原成普通大小、最小化被拉起）→ 隐藏前记录 `GetWindowPlacement` 的 `showCmd`，按原状态还原。
 
 ## 许可
 

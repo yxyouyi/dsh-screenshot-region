@@ -1,6 +1,6 @@
 {
   "name": "dsh-screenshot-region",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "DeepSeek Harness 截图插件：输入框旁一键原生框选，只有框内图片进入对话框草稿。One-step Windows region screenshot for the DSH composer: press, drag, done.",
   "type": "module",
   "main": "lib/index.js",
